@@ -6,3 +6,4 @@
 src/ESP32.code-workspace
 .DS_STORE
 config.h
+.vscode
