@@ -95,8 +95,6 @@ bool displayCalendar() {
         show = events.substring(r, i);
 
         if (t == 0 || t == 2){
-        Serial.println(show.substring(0, 5));
-        Serial.println(p);
         if(time >= show.substring(0, 5))
           {
               pixels.setPixelColor(p, pixels.Color(150, 0, 0));
