@@ -37,7 +37,7 @@ function doGet(e) {
   
   
   var str = '';
-  for (var ii = 0; ii <= 2; ii++){
+  for (var ii = 0; ii < 2; ii++){
     var event=events[ii]; 
     if(event)
     {   
