@@ -31,7 +31,7 @@ Adafruit_NeoPixel pixels(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
 
 //Function for retrieving Calendar Entries
 bool displayCalendar() {
-
+ char buffer[6];
   String hours;
   String minutes;
   String time; 
@@ -41,8 +41,10 @@ bool displayCalendar() {
     Serial.println("Failed to obtain time");
   }
   hours = timeinfo.tm_hour;
-  minutes = timeinfo.tm_min;
-  time = hours + ":" + minutes;
+  minutes = timeinfo.tm_min;  
+  strftime(buffer, sizeof(buffer), "%H:%M", &timeinfo);
+
+  Serial.println(buffer);
 
   //Getting calendar from your published google script
   Serial.println("Getting calendar");
