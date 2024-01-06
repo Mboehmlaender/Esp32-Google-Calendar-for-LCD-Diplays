@@ -33,14 +33,19 @@ Adafruit_NeoPixel pixels(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
 bool displayCalendar() {
 
   char buffer[6];
+  String hours;
+  String minutes;
   String time; 
 
   struct tm timeinfo;
   if(!getLocalTime(&timeinfo)){
     Serial.println("Failed to obtain time");
   }
-  
-  strftime(buffer, sizeof(buffer), "%H:%M", &timeinfo);
+  hours = timeinfo.tm_hour;
+  minutes = timeinfo.tm_min;  
+  time = strftime(buffer, sizeof(buffer), "%H:%M", &timeinfo);
+
+  Serial.println(buffer);
 
   //Getting calendar from your published google script
   Serial.println("Getting calendar");
@@ -82,7 +87,7 @@ bool displayCalendar() {
     LCD.setCursor(0, 1);
     LCD.print("+Keine Termine mehr+");
     LCD.setCursor(0, 2);
-    LCD.print("+      "+String(buffer)+"      +");
+    LCD.print("+  Geh nach Hause  +");
     LCD.setCursor(0, 3);
     LCD.print("++++++++++++++++++++");
   } else {
@@ -91,8 +96,9 @@ bool displayCalendar() {
     {
       if (events.charAt(i) == ';') {
         show = events.substring(r, i);
+
         if (t == 0 || t == 2){
-        if(String(buffer) >= show.substring(0, 5))
+        if(time >= show.substring(0, 5))
           {
               pixels.setPixelColor(p, pixels.Color(150, 0, 0));
               pixels.setBrightness(30);
@@ -112,18 +118,6 @@ bool displayCalendar() {
 
 //Function for WiFi Connection
 bool connectWiFi() {
-  //Setup WiFi Connection
-  LCD.backlight();
-  LCD.setCursor(0, 0);
-  LCD.print("++++++++++++++++++++");
-  LCD.setCursor(0, 1);
-  LCD.print("+Verbinde mit WLAN!+");
-  LCD.setCursor(0, 2);
-  LCD.print("+   Bitte warten   +");
-  LCD.setCursor(0, 3);
-  LCD.print("++++++++++++++++++++");
-  delay(1000);
-
   WiFi.mode(WIFI_STA);
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
   Serial.print("Connecting to wifi");
