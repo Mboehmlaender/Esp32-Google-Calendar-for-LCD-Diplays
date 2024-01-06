@@ -4,6 +4,6 @@
 .vscode/launch.json
 .vscode/ipch
 src/ESP32.code-workspace
-.DS_STORE
 config.h
 .vscode
+**/.DS_Store
