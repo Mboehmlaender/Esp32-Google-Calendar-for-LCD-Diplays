@@ -13,17 +13,34 @@ The basic configuration happens in the config.h file. Enter your Google Scripts 
 #include <LiquidCrystal_I2C.h>
 #include <WiFi.h>
 #include <HTTPClient.h>
+#include <Adafruit_NeoPixel.h>
+#include "time.h"
 
 #include "config.h"
 //#include <SPIFFS.h>
 //#include <FS.h>
 
+#define PIN       33 // On Trinket or Gemma, suggest changing this to 1
+#define NUMPIXELS 2 // Popular NeoPixel ring size
+
+
 //Create Objects for LCD and HTTPClient
 LiquidCrystal_I2C LCD = LiquidCrystal_I2C(0x27, 20, 4);
 HTTPClient http;
+Adafruit_NeoPixel pixels(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
 
 //Function for retrieving Calendar Entries
 bool displayCalendar() {
+
+  char buffer[6];
+  String time; 
+
+  struct tm timeinfo;
+  if(!getLocalTime(&timeinfo)){
+    Serial.println("Failed to obtain time");
+  }
+  
+  strftime(buffer, sizeof(buffer), "%H:%M", &timeinfo);
 
   //Getting calendar from your published google script
   Serial.println("Getting calendar");
@@ -46,8 +63,17 @@ bool displayCalendar() {
 
   //Display Events
   int sa[4], r = 0, t = 0;
+  float p = 0;
   String events = response;
   String show;
+    for(int i=0; i<NUMPIXELS; i++) { // For each pixel...
+
+    // pixels.Color() takes RGB values, from 0,0,0 up to 255,255,255
+    // Here we're using a moderately bright green color:
+    pixels.setPixelColor(i, pixels.Color(0, 150, 0));
+    pixels.setBrightness(30);
+    pixels.show();   // Send the updated pixel colors to the hardware.
+  }
   if (events.length() == 0)  //If no more events display message
   {
     LCD.clear();
@@ -56,7 +82,7 @@ bool displayCalendar() {
     LCD.setCursor(0, 1);
     LCD.print("+Keine Termine mehr+");
     LCD.setCursor(0, 2);
-    LCD.print("+  Geh nach Hause  +");
+    LCD.print("+      "+String(buffer)+"      +");
     LCD.setCursor(0, 3);
     LCD.print("++++++++++++++++++++");
   } else {
@@ -65,9 +91,18 @@ bool displayCalendar() {
     {
       if (events.charAt(i) == ';') {
         show = events.substring(r, i);
+        if (t == 0 || t == 2){
+        if(String(buffer) >= show.substring(0, 5))
+          {
+              pixels.setPixelColor(p, pixels.Color(150, 0, 0));
+              pixels.setBrightness(30);
+              pixels.show();   // Send the updated pixel colors to the hardware.         
+          }
+        }
         LCD.setCursor(0, t);
         LCD.print(show.substring(0, 19));
         r = (i + 1);
+        p = (p+0.5);
         t++;
       }
     }
@@ -77,6 +112,18 @@ bool displayCalendar() {
 
 //Function for WiFi Connection
 bool connectWiFi() {
+  //Setup WiFi Connection
+  LCD.backlight();
+  LCD.setCursor(0, 0);
+  LCD.print("++++++++++++++++++++");
+  LCD.setCursor(0, 1);
+  LCD.print("+Verbinde mit WLAN!+");
+  LCD.setCursor(0, 2);
+  LCD.print("+   Bitte warten   +");
+  LCD.setCursor(0, 3);
+  LCD.print("++++++++++++++++++++");
+  delay(1000);
+
   WiFi.mode(WIFI_STA);
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
   Serial.print("Connecting to wifi");
@@ -94,7 +141,8 @@ void setup() {
   
   //Initilaize LCD
   LCD.init();
-  
+  pixels.begin(); // INITIALIZE NeoPixel strip object (REQUIRED)
+
   connectWiFi();
 
   //Setup WiFi Connection
@@ -108,10 +156,15 @@ void setup() {
   //LCD.setCursor(0, 3);
   //LCD.print("++++++++++++++++++++");
   //delay(1000);
+
+  // Init and get the time
+  configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
 }
 
 //Main Code
 void loop() {
+
+  pixels.clear(); // Set all pixel colors to 'off'
 
   //Update message
   LCD.clear();
@@ -125,12 +178,11 @@ void loop() {
   LCD.setCursor(0, 3);
   LCD.print("++++++++++++++++++++");
   delay(1000);
-
   //Display Calendar
   displayCalendar();  // Main flow for drawing calendar
 
   //Update every 5 Minutes
-  delay(30000);
+  delay(300000);
   LCD.noBacklight();
   LCD.clear();
 }
